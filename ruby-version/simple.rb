@@ -37,6 +37,54 @@ class Add<Struct.new(:left,:right)
 	end
 end
 
+class Minus<Struct.new(:left,:right)
+	def to_s
+		"#{left}-#{right}"
+	end
+
+	def inspect
+		"<<#{self}>>"
+	end
+
+	def reducible?
+		true 
+	end
+
+	def reduce(environment)
+		if left.reducible?
+			Minus.new(left.reduce(environment),right)
+		elsif right.reducible?
+			Minus.new(left,right.reduce(environment))
+		else
+			Number.mew(left.value-right.value)
+		end
+	end
+end
+
+class Divide<Struct.new(:left,:right)
+	def to_s
+		"#{left}/#{right}"
+	end
+
+	def inspect
+		"<<#{self}>>"
+	end
+
+	def reduvible?
+		true 
+	end
+
+	def reduce(environment)
+		if left.reducible?
+			Divide.new(left.reduce(environment),right)
+		elsif right.reducible?
+			Divide.new(left,right.reduce(environment))
+		else
+			Number.new(left.value/right.value)
+		end
+	end
+end
+
 class Multiply<Struct.new(:left,:right)
 	def to_s
 		"#{left}*#{right}"
