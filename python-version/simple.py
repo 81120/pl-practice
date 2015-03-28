@@ -59,6 +59,44 @@ class Multiply(object):
 		else:
 			return Number(self.left.value*self.right.value)
 
+class Minus(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right 
+
+	def __str__(self):
+		return str(self.left)+'-'+str(self.right)
+
+	def reducible(self):
+		return True
+
+	def _reduce(self,environment):
+		if self.left.reducible():
+			return Minus(self.left._reduce(environment),self.right)
+		elif self.right.reducible():
+			return Minus(self.left,self.right._reduce(environment))
+		else:
+			return Number(self.left.value-self.right.value)
+
+class Divide(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right 
+
+	def __str__(self):
+		return str(self.left)+'/'+str(right)
+
+	def reducible(self):
+		return True
+
+	def _reduce(self,environment):
+		if self.left.reducible():
+			return Divide(self.left._reduce(environment),self.right)
+		elif self.right.reducible():
+			return Divide(self.left,self.right._reduce(environment))
+		else:
+			return Number(self.left.value/self.right.value)
+
 class LessThan(object):
 	def __init__(self,left,right):
 		self.left=left
