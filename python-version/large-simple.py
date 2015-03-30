@@ -6,6 +6,13 @@ class Environment(dict):
 		result=result+'}'
 		return result
 
+class Parameters(list):
+	def __str__(self):
+		if len(self)==0:
+			return '[]'
+		else:
+			return '['+reduce(lambda u,v:u+','+v,map(str,self))+']'
+
 class Number(object):
 	def __init__(self,value):
 		self.value=value
@@ -118,6 +125,31 @@ class While(object):
 		else:
 			pass 
 
+class Lambda(object):
+	def __init__(self,parameters,body):
+		self.parameters=parameters
+		self.body=body
+
+	def __str__(self):
+		return 'lambda '+str(self.parameters)+'{'+str(self.body)+'}'
+
+	def evaluate(self,environment):
+		environment[str(self)]=self
+
+class Call(object):
+	def __init__(self,function,values):
+		self.function=function 
+		self.values=values 
+
+	def __str__(self):
+		return 'call '+str(self.function)+' with '+str(values)
+
+	def evaluate(self,environment):
+		local_environment=Environment()
+		for i in range(len(self.function.parameters)):
+			local_environment[self.function.parameters[i]]=self.values[i].evaluate(environment)
+		return self.function.body.evaluate(local_environment)
+
 def main():
 	environment=Environment()
 	environment['x']=Number(0)
@@ -125,6 +157,16 @@ def main():
 	expression=Sequence(Assign('x',Number(3)),Assign('x',Number(4)))
 	expression=While(LessThan(Variable('x'),Number(5)),Assign('x',Add(Variable('x'),Number(2))))
 	expression.evaluate(environment)
+	print environment
+	x=Parameters()
+	print x
+	x.append('x')
+	x.append('y')
+	print x
+
+	print 'test lambda'
+	expression=Call(Lambda(Parameters(['x']),Add(Variable('x'),Number(1))),Parameters([Number(1)]))
+	print expression.evaluate(environment)
 	print environment
 
 if __name__ == '__main__':
