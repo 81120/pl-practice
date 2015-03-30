@@ -44,16 +44,103 @@ class Add(object):
 	def evaluate(self,environment):
 		return Number(self.left.evaluate(environment).value+self.right.evaluate(environment).value)
 
+class Minus(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right
+
+	def __str__(self):
+		return str(self.left)+'-'+str(self.right)
+
+	def evaluate(self,environment):
+		return Number(self.left.evaluate(environment).value-self.right.evaluate(environment).value)
+
+class Times(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right 
+
+	def __str__(self):
+		return str(self.left)+'*'+str(self.right)
+
+	def evaluate(self,environment):
+		return Number(self.left.evaluate(environment).value*self.right.evaluate(environment).value)
+
+class Divide(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right 
+
+	def __str__(self):
+		return str(self.left)+'/'+str(self.right)
+
+	def evaluate(self,environment):
+		return Number(self.left.evaluate(environment).value/self.right.evaluate(environment).value)
+
 class LessThan(object):
 	def __init__(self,left,right):
 		self.left=left 
 		self.right=right 
 
 	def __str__(self):
-		return str(self.left)+'<'+str(self.right)
+		return '('+str(self.left)+'<'+str(self.right)+')'
 
 	def evaluate(self,environment):
 		return Boolean(self.left.evaluate(environment).value<self.right.evaluate(environment).value)
+
+class GreaterThan(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right 
+
+	def __str__(self):
+		return '('+str(self.left)+'>'+str(self.right)+')'
+
+	def evaluate(self,environment):
+		return Boolean(self.left.evaluate(environment).value>self.right.evaluate(environment).value)
+
+class Equal(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right 
+
+	def __str__(self):
+		return '('+str(self.left)+'='+str(self.right)+')'
+
+	def evaluate(self,environment):
+		return Boolean(self.left.evaluate(environment).value==self.right.evaluate(environment).value)
+
+class And(object):
+	def __init__(self,left,right):
+		self.left=left 
+		self.right=right 
+
+	def __str__(self):
+		return '('+str(self.left)+'&&'+str(self.right)+')'
+
+	def evaluate(self,environment):
+		return Boolean(self.left.evaluate(environment).value and self.right.evaluate(environment).value)
+
+class Or(object):
+	def __init__(self,left,right):
+		self.left=left
+		self.right=right 
+
+	def __str__(self):
+		return '('+str(self.left)+'||'+str(self.right)+')'
+
+	def evaluate(self,environment):
+		return Boolean(self.left.evaluate(environment).value or self.right.evaluate(environment).value)
+
+class Not(object):
+	def __init__(self,item):
+		self.item=item 
+
+	def __str__(self):
+		return 'not('+str(self.item)+')'
+
+	def evaluate(self,environment):
+		return Boolean(not self.item.evaluate(environment).value)
 
 class Variable(object):
 	def __init__(self,name):
@@ -64,24 +151,6 @@ class Variable(object):
 
 	def evaluate(self,environment):
 		return environment[self.name]
-
-class Assign(object):
-	def __init__(self,name,expression):
-		self.name=name 
-		self.expression=expression
-
-	def __str__(self):
-		return self.name+'='+str(self.expression)
-
-	def evaluate(self,environment):
-		environment[self.name]=self.expression.evaluate(environment)
-
-class DoNothing(object):
-	def __eq__(self,other):
-		return isinstance(other,DoNothing)
-
-	def evaluate(self,environment):
-		pass
 
 class If(object):
 	def __init__(self,condition,consequence,alternative):
@@ -94,21 +163,33 @@ class If(object):
 
 	def evaluate(self,environment):
 		if self.condition.evaluate(environment).value:
-			self.consequence.evaluate(environment)
+			return self.consequence.evaluate(environment)
 		else:
-			self.alternative.evaluate(environment)
+			return self.alternative.evaluate(environment)
 
-class Sequence(object):
-	def __init__(self,first,second):
-		self.first=first 
-		self.second=second 
+class Assign(object):
+	def __init__(self,name,expression):
+		self.name=name 
+		self.expression=expression
 
 	def __str__(self):
-		return str(self.first)+','+str(self.second)
+		return str(self.name)+'='+str(self.expression)
 
 	def evaluate(self,environment):
-		self.first.evaluate(environment)
-		self.second.evaluate(environment)
+		environment[self.name]=self.expression.evaluate(environment)
+
+class Block(object):
+	def __init__(self,items):
+		self.items=items 
+
+	def __str__(self):
+		return 'block:['+reduce(lambda u,v:u+','+v,map(str,self.items))+']'
+
+	def evaluate(self,environment):
+		for i in range(len(self.items)-1):
+			self.items[i].evaluate(environment)
+		return self.items[len(self.items)-1].evaluate(environment)
+
 
 class While(object):
 	def __init__(self,condition,body):
@@ -121,9 +202,7 @@ class While(object):
 	def evaluate(self,environment):
 		if self.condition.evaluate(environment).value:
 			self.body.evaluate(environment)
-			self.evaluate(environment)
-		else:
-			pass 
+			self.evaluate(environment) 
 
 class Lambda(object):
 	def __init__(self,parameters,body):
@@ -131,10 +210,10 @@ class Lambda(object):
 		self.body=body
 
 	def __str__(self):
-		return 'lambda '+str(self.parameters)+'{'+str(self.body)+'}'
+		return 'lambda'+str(self.parameters)+'{'+str(self.body)+'}'
 
 	def evaluate(self,environment):
-		environment[str(self)]=self
+		return self
 
 class Call(object):
 	def __init__(self,function,values):
@@ -142,7 +221,7 @@ class Call(object):
 		self.values=values 
 
 	def __str__(self):
-		return 'call '+str(self.function)+' with '+str(values)
+		return 'call '+str(self.function)+' with '+str(self.values)
 
 	def evaluate(self,environment):
 		local_environment=Environment()
@@ -152,20 +231,14 @@ class Call(object):
 
 def main():
 	environment=Environment()
-	environment['x']=Number(0)
 	print environment
-	expression=Sequence(Assign('x',Number(3)),Assign('x',Number(4)))
-	expression=While(LessThan(Variable('x'),Number(5)),Assign('x',Add(Variable('x'),Number(2))))
-	expression.evaluate(environment)
-	print environment
-	x=Parameters()
-	print x
-	x.append('x')
-	x.append('y')
-	print x
-
-	print 'test lambda'
-	expression=Call(Lambda(Parameters(['x']),Add(Variable('x'),Number(1))),Parameters([Number(1)]))
+	environment['x']=Number(1)
+	expression=Call(Lambda(Parameters(['x']),If(LessThan(Variable('x'),Number(1)),Number(1),Number(2))),Parameters([Number(0)]))
+	#expression=Minus(Number(5),Number(1))
+	expression=Not(Or(LessThan(Number(2),Number(3)),GreaterThan(Number(2),Number(3))))
+	function=Lambda(Parameters([]),Block([Assign('y',Number(0)),While(LessThan(Variable('y'),Number(5)),Assign('y',Add(Variable('y'),Number(2)))),Times(Variable('y'),Number(2))]))
+	expression=Call(function,Parameters())
+	print expression
 	print expression.evaluate(environment)
 	print environment
 
